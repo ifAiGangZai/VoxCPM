@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/OpenBMB/VoxCPM/"><img src="https://img.shields.io/badge/Project%20Page-GitHub-blue" alt="Project Page"></a>
   <a href="https://huggingface.co/spaces/OpenBMB/VoxCPM-Demo"><img src="https://img.shields.io/badge/Live%20Playground-Demo-orange" alt="Live Playground"></a>
-  <a href="https://colab.research.google.com/github/OpenBMB/VoxCPM/blob/main/notebooks/VoxCPM_WebUI_Colab.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"></a>
+  <a href="https://colab.research.google.com/github/ifAiGangZai/VoxCPM/blob/main/notebooks/VoxCPM_WebUI_Colab.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"></a>
   <a href="https://voxcpm.readthedocs.io/zh-cn/latest/"><img src="https://img.shields.io/badge/Docs-ReadTheDocs-8CA1AF" alt="Documentation"></a>
   <a href="https://huggingface.co/openbmb/VoxCPM2"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-VoxCPM2-yellow" alt="Hugging Face"></a>
   <a href="https://modelscope.cn/models/OpenBMB/VoxCPM2"><img src="https://img.shields.io/badge/ModelScope-VoxCPM2-purple" alt="ModelScope"></a>
@@ -247,7 +247,7 @@ python app.py --port 8808  # 然后在浏览器打开 http://localhost:8808
 如果你只需要在 Colab 中使用大部分 WebUI 推理功能（声音设计、可控克隆、极致克隆），推荐直接使用仓库内的 notebook：
 
 - Notebook: [notebooks/VoxCPM_WebUI_Colab.ipynb](./notebooks/VoxCPM_WebUI_Colab.ipynb)
-- Open in Colab: https://colab.research.google.com/github/OpenBMB/VoxCPM/blob/main/notebooks/VoxCPM_WebUI_Colab.ipynb
+- Open in Colab: https://colab.research.google.com/github/ifAiGangZai/VoxCPM/blob/main/notebooks/VoxCPM_WebUI_Colab.ipynb
 
 Colab 中建议：
 
