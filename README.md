@@ -7,6 +7,7 @@
 <p align="center">
   <a href="https://github.com/OpenBMB/VoxCPM/"><img src="https://img.shields.io/badge/Project%20Page-GitHub-blue" alt="Project Page"></a>
   <a href="https://huggingface.co/spaces/OpenBMB/VoxCPM-Demo"><img src="https://img.shields.io/badge/Live%20Playground-Demo-orange" alt="Live Playground"></a>
+  <a href="https://colab.research.google.com/github/OpenBMB/VoxCPM/blob/main/notebooks/VoxCPM_WebUI_Colab.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"></a>
   <a href="https://voxcpm.readthedocs.io/en/latest/"><img src="https://img.shields.io/badge/Docs-ReadTheDocs-8CA1AF" alt="Documentation"></a>
   <a href="https://huggingface.co/openbmb/VoxCPM2"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-VoxCPM2-yellow" alt="Hugging Face"></a>
   <a href="https://modelscope.cn/models/OpenBMB/VoxCPM2"><img src="https://img.shields.io/badge/ModelScope-VoxCPM2-purple" alt="ModelScope"></a>
@@ -241,6 +242,34 @@ voxcpm --help
 ```bash
 python app.py --port 8808  # then open in browser: http://localhost:8808
 ```
+
+### Google Colab (WebUI)
+
+If you mainly want the WebUI inference features on Colab, such as voice design, controllable cloning, and ultimate cloning, use the notebook in this repo:
+
+- Notebook: [notebooks/VoxCPM_WebUI_Colab.ipynb](./notebooks/VoxCPM_WebUI_Colab.ipynb)
+- Open in Colab: https://colab.research.google.com/github/OpenBMB/VoxCPM/blob/main/notebooks/VoxCPM_WebUI_Colab.ipynb
+
+Recommended Colab launch:
+
+```python
+from app import run_demo
+
+run_demo(
+    model_id="openbmb/VoxCPM2",
+    share=True,          # recommended on Colab
+    optimize=False,      # faster and safer cold start
+    enable_asr=True,     # keeps auto-transcription for ultimate cloning
+    prevent_thread_lock=True,
+)
+```
+
+Notes:
+
+- Use a GPU runtime in Colab.
+- The first launch is slow because both VoxCPM2 and the ASR model need to be downloaded.
+- If you only need voice design and basic cloning, set `enable_asr=False` to reduce cold-start overhead.
+- Colab support is aimed at inference demos, not LoRA or full training workflows.
 
 ### 🚢 Production Deployment (Nano-vLLM)
 

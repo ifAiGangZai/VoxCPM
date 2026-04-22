@@ -219,34 +219,64 @@ _APP_THEME = gr.themes.Soft(
 
 # ---------- Model ----------
 
+def is_colab_runtime() -> bool:
+    return "google.colab" in sys.modules
+
+
 class VoxCPMDemo:
-    def __init__(self, model_id: str = "openbmb/VoxCPM2") -> None:
+    def __init__(
+        self,
+        model_id: str = "openbmb/VoxCPM2",
+        optimize: bool = True,
+        enable_asr: bool = True,
+        device: Optional[str] = None,
+    ) -> None:
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        if device and device != "auto":
+            self.device = device
         logger.info(f"Running on device: {self.device}")
 
         self.asr_model_id = "iic/SenseVoiceSmall"
-        self.asr_model: Optional[AutoModel] = AutoModel(
+        self.asr_model: Optional[AutoModel] = None
+        self.enable_asr = enable_asr
+        self.voxcpm_model: Optional[voxcpm.VoxCPM] = None
+        self._model_id = model_id
+        self._optimize = optimize
+
+    def get_or_load_asr(self) -> AutoModel:
+        if not self.enable_asr:
+            raise RuntimeError("ASR is disabled for this demo instance.")
+        if self.asr_model is not None:
+            return self.asr_model
+
+        logger.info(f"Loading ASR model: {self.asr_model_id}")
+        asr_device = "cuda:0" if self.device.startswith("cuda") else "cpu"
+        self.asr_model = AutoModel(
             model=self.asr_model_id,
             disable_update=True,
             log_level="DEBUG",
-            device="cuda:0" if self.device == "cuda" else "cpu",
+            device=asr_device,
         )
-
-        self.voxcpm_model: Optional[voxcpm.VoxCPM] = None
-        self._model_id = model_id
+        logger.info("ASR model loaded successfully.")
+        return self.asr_model
 
     def get_or_load_voxcpm(self) -> voxcpm.VoxCPM:
         if self.voxcpm_model is not None:
             return self.voxcpm_model
         logger.info(f"Loading model: {self._model_id}")
-        self.voxcpm_model = voxcpm.VoxCPM.from_pretrained(self._model_id, optimize=True)
+        self.voxcpm_model = voxcpm.VoxCPM.from_pretrained(
+            self._model_id,
+            optimize=self._optimize,
+            device=self.device,
+        )
         logger.info("Model loaded successfully.")
         return self.voxcpm_model
 
     def prompt_wav_recognition(self, prompt_wav: Optional[str]) -> str:
         if prompt_wav is None:
             return ""
-        res = self.asr_model.generate(input=prompt_wav, language="auto", use_itn=True)
+        asr_model = self.get_or_load_asr()
+        res = asr_model.generate(input=prompt_wav, language="auto", use_itn=True)
         return res[0]["text"].split("|>")[-1]
 
     def _build_generate_kwargs(
@@ -487,13 +517,41 @@ def run_demo(
     server_port: int = 8808,
     show_error: bool = True,
     model_id: str = "openbmb/VoxCPM2",
+    share: Optional[bool] = None,
+    debug: Optional[bool] = None,
+    optimize: Optional[bool] = None,
+    enable_asr: bool = True,
+    device: Optional[str] = None,
+    prevent_thread_lock: bool = True,
 ):
-    demo = VoxCPMDemo(model_id=model_id)
+    in_colab = is_colab_runtime()
+    resolved_share = in_colab if share is None else share
+    resolved_debug = in_colab if debug is None else debug
+    resolved_optimize = (not in_colab) if optimize is None else optimize
+
+    logger.info(
+        "Launching demo with share=%s, debug=%s, optimize=%s, asr=%s, colab=%s",
+        resolved_share,
+        resolved_debug,
+        resolved_optimize,
+        enable_asr,
+        in_colab,
+    )
+
+    demo = VoxCPMDemo(
+        model_id=model_id,
+        optimize=resolved_optimize,
+        enable_asr=enable_asr,
+        device=device,
+    )
     interface = create_demo_interface(demo)
     interface.queue(max_size=10, default_concurrency_limit=1).launch(
         server_name=server_name,
         server_port=server_port,
         show_error=show_error,
+        share=resolved_share,
+        debug=resolved_debug,
+        prevent_thread_lock=prevent_thread_lock,
         i18n=I18N,
         theme=_APP_THEME,
         css=_CUSTOM_CSS,
@@ -508,5 +566,42 @@ if __name__ == "__main__":
         help="Local path or HuggingFace repo ID (default: openbmb/VoxCPM2)",
     )
     parser.add_argument("--port", type=int, default=8808, help="Server port")
+    parser.add_argument(
+        "--device",
+        type=str,
+        default=None,
+        help="Runtime device override (e.g. cpu, cuda, cuda:0). Default: auto-detect",
+    )
+    parser.add_argument(
+        "--disable-asr",
+        action="store_true",
+        help="Disable ASR auto-transcription for ultimate cloning mode",
+    )
+    parser.add_argument(
+        "--no-optimize",
+        action="store_true",
+        help="Disable torch.compile optimization. Recommended for Colab cold start.",
+    )
+    parser.set_defaults(share=None)
+    parser.add_argument(
+        "--share",
+        dest="share",
+        action="store_true",
+        help="Create a public Gradio share link. Enabled by default on Colab.",
+    )
+    parser.add_argument(
+        "--no-share",
+        dest="share",
+        action="store_false",
+        help="Disable the Gradio share link.",
+    )
     args = parser.parse_args()
-    run_demo(model_id=args.model_id, server_port=args.port)
+    run_demo(
+        model_id=args.model_id,
+        server_port=args.port,
+        share=args.share,
+        optimize=not args.no_optimize,
+        enable_asr=not args.disable_asr,
+        device=args.device,
+        prevent_thread_lock=False,
+    )
